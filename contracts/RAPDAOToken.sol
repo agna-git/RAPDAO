@@ -12,8 +12,8 @@ contract RAPDAOToken is ERC20, Ownable {
     // 토큰 decimals (18 = ETH와 동일)
     uint8 private constant _decimals = 18;
     
-    // 최대 공급량 (1,000,000,000 RAP)
-    uint256 private constant MAX_SUPPLY = 1_000_000_000 * 10**_decimals;
+    // 최대 공급량 (10,000,000 RAP)
+    uint256 private constant MAX_SUPPLY = 10_000_000 * 10**_decimals;
     
     // 이벤트
     event TokensMinted(address indexed to, uint256 amount);
@@ -27,8 +27,8 @@ contract RAPDAOToken is ERC20, Ownable {
         ERC20("RAPDAO Token", "RAP") 
         Ownable(initialOwner)
     {
-        // 초기 공급량을 소유자에게 발행 (총 공급량의 10%)
-        uint256 initialSupply = 100_000_000 * 10**_decimals;
+        // 초기 공급량을 소유자에게 발행 (전체 1000만개)
+        uint256 initialSupply = 10_000_000 * 10**_decimals;
         _mint(initialOwner, initialSupply);
         emit TokensMinted(initialOwner, initialSupply);
     }
