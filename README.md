@@ -1,247 +1,344 @@
-# RAPDAO Token Platform
+# 🚀 RAPDAO Token Platform
 
-> 🚀 **실제 블록체인 배포 가능!** ERC-20 스마트 컨트랙트로 진짜 암호화폐를 만들어보세요!
+> **실제 블록체인에 배포된 ERC-20 토큰!** 우주 테마의 멋진 웹 인터페이스로 토큰을 관리하세요!
 
-## 프로젝트 개요
-- **이름**: RAPDAO Token Platform
-- **목표**: 차세대 토큰 발행 및 관리 플랫폼
-- **주요 기능**: 
-  - 토큰 발행 (Minting)
-  - 토큰 전송 (Transfer)
-  - 계정 관리
-  - 트랜잭션 내역 조회
-  - **✨ NEW: 실제 블록체인 배포 (Sepolia/Mumbai 테스트넷)**
+![Network](https://img.shields.io/badge/Network-Sepolia-blue)
+![Token](https://img.shields.io/badge/Token-RAP-green)
+![Supply](https://img.shields.io/badge/Supply-10M-yellow)
+![Blockchain](https://img.shields.io/badge/Blockchain-Ethereum-purple)
 
-## 🌐 URLs
-- **개발 서버**: https://3000-in1uq58h63mcoaphdbad0-5c13a017.sandbox.novita.ai
-- **로컬**: http://localhost:3000
+---
 
-## ✨ 완료된 기능
+## 🌟 프로젝트 개요
 
-### 1. 토큰 발행 (Mint)
-- 새로운 지갑 주소에 토큰 발행
-- 초기 잔액 설정 가능
-- 중복 주소 검증
+**RAPDAO**는 실제 Ethereum Sepolia 테스트넷에 배포된 ERC-20 토큰입니다. 우주를 테마로 한 멋진 웹 인터페이스를 통해 토큰을 쉽게 관리할 수 있습니다.
 
-### 2. 토큰 전송 (Transfer)
-- 계정 간 토큰 전송
-- 잔액 부족 검증
-- 자동 트랜잭션 해시 생성
-- 수신자 계정 자동 생성
+### ✨ 주요 기능
 
-### 3. 계정 관리
-- 전체 계정 목록 조회
-- 개별 계정 잔액 조회
-- 계정 생성 일시 추적
+- 🪙 **실제 블록체인 토큰** - Sepolia 테스트넷에 배포
+- 🎨 **우주 테마 UI** - 별, 로켓, 행성 애니메이션
+- 🔗 **MetaMask 연동** - 원클릭 지갑 연결
+- 💸 **토큰 전송** - 친구에게 RAP 전송
+- 📊 **실시간 잔액** - 블록체인에서 직접 조회
+- 🔄 **자동 네트워크 전환** - Sepolia로 자동 전환
 
-### 4. 트랜잭션 내역
-- 전체 트랜잭션 조회
-- 특정 주소별 트랜잭션 필터링
-- 트랜잭션 상태 추적 (pending/confirmed)
+---
+
+## 📊 토큰 정보
+
+| 항목 | 값 |
+|------|-----|
+| **이름** | RAPDAO Token |
+| **심볼** | RAP |
+| **총 공급량** | 10,000,000 RAP |
+| **Decimals** | 18 |
+| **네트워크** | Sepolia Testnet |
+| **컨트랙트 주소** | `0x90609291dE2433dFe1E4e553c8a1A68f94d8ab7d` |
+
+### 🔍 Etherscan
+
+**컨트랙트 확인**: https://sepolia.etherscan.io/address/0x90609291dE2433dFe1E4e553c8a1A68f94d8ab7d
+
+---
+
+## 🌐 웹사이트
+
+**Live Demo**: https://3000-in1uq58h63mcoaphdbad0-5c13a017.sandbox.novita.ai
+
+### 🎮 사용 방법
+
+1. **웹사이트 접속**
+2. **"Connect Wallet" 클릭**
+3. MetaMask 자동 연결 (Sepolia로 자동 전환)
+4. 잔액 확인 및 토큰 전송!
+
+---
+
+## 🛠️ 기술 스택
+
+### Backend
+- **Hono** - 경량 웹 프레임워크
+- **TypeScript** - 타입 안정성
+- **Cloudflare Pages** - 엣지 배포
+
+### Blockchain
+- **Solidity 0.8.20** - 스마트 컨트랙트
+- **OpenZeppelin** - 보안 라이브러리
+- **Hardhat** - 개발 환경
+- **ethers.js v6** - Web3 연동
+
+### Frontend
+- **TailwindCSS** - 스타일링
+- **Orbitron 폰트** - 우주 느낌
+- **애니메이션** - 별, 로켓, 행성
+
+---
+
+## 🚀 로컬 개발 환경 설정
+
+### 1️⃣ 저장소 클론
+
+\`\`\`bash
+git clone https://github.com/agna-git/RAPDAO.git
+cd RAPDAO
+\`\`\`
+
+### 2️⃣ 의존성 설치
+
+\`\`\`bash
+npm install
+\`\`\`
+
+### 3️⃣ 환경 변수 설정
+
+\`\`\`bash
+cp .env.example .env
+\`\`\`
+
+\`.env\` 파일 편집:
+\`\`\`bash
+PRIVATE_KEY=0x여기에_개인키
+SEPOLIA_RPC_URL=https://ethereum-sepolia.publicnode.com
+\`\`\`
+
+### 4️⃣ 프로젝트 빌드
+
+\`\`\`bash
+npm run build
+\`\`\`
+
+### 5️⃣ 개발 서버 실행
+
+\`\`\`bash
+npm run dev:sandbox
+# 또는
+pm2 start ecosystem.config.cjs
+\`\`\`
+
+### 6️⃣ 브라우저에서 확인
+
+http://localhost:3000
+
+---
+
+## 🔐 블록체인 배포
+
+### 스마트 컨트랙트 컴파일
+
+\`\`\`bash
+npm run blockchain:compile
+\`\`\`
+
+### Sepolia 테스트넷 배포
+
+\`\`\`bash
+npm run blockchain:deploy:sepolia
+\`\`\`
+
+### 컨트랙트 검증 (선택)
+
+\`\`\`bash
+npm run blockchain:verify
+\`\`\`
+
+---
+
+## 📁 프로젝트 구조
+
+\`\`\`
+RAPDAO/
+├── src/
+│   └── index.tsx          # 메인 애플리케이션
+├── contracts/
+│   └── RAPDAOToken.sol    # ERC-20 스마트 컨트랙트
+├── scripts/
+│   ├── deploy.cjs         # 배포 스크립트
+│   └── verify.cjs         # 검증 스크립트
+├── migrations/
+│   └── 0001_initial_schema.sql  # D1 마이그레이션
+├── public/
+│   └── static/            # 정적 파일
+├── hardhat.config.cjs     # Hardhat 설정
+├── wrangler.jsonc         # Cloudflare 설정
+├── ecosystem.config.cjs   # PM2 설정
+├── package.json           # NPM 설정
+├── deployment-info.json   # 배포 정보
+├── BLOCKCHAIN-GUIDE.md    # 블록체인 상세 가이드
+└── DEPLOY-NOW.md          # 배포 가이드
+\`\`\`
+
+---
+
+## 📜 사용 가능한 명령어
+
+### 개발
+\`\`\`bash
+npm run dev              # Vite 개발 서버
+npm run dev:sandbox      # Wrangler 개발 서버
+npm run build            # 프로젝트 빌드
+npm run preview          # 빌드 미리보기
+\`\`\`
+
+### 블록체인
+\`\`\`bash
+npm run blockchain:compile           # 컨트랙트 컴파일
+npm run blockchain:deploy:sepolia    # Sepolia 배포
+npm run blockchain:deploy:mumbai     # Mumbai 배포
+npm run blockchain:verify            # 컨트랙트 검증
+npm run blockchain:console           # Hardhat 콘솔
+\`\`\`
+
+### 데이터베이스
+\`\`\`bash
+npm run db:migrate:local   # 로컬 마이그레이션
+npm run db:migrate:prod    # 프로덕션 마이그레이션
+npm run db:reset           # DB 초기화
+\`\`\`
+
+### 유틸리티
+\`\`\`bash
+npm run clean-port         # 포트 3000 정리
+npm run test               # 서버 테스트
+\`\`\`
+
+---
 
 ## 🎨 디자인 특징
-- **미래지향적 UI**: 글래스모피즘(Glassmorphism) 디자인
-- **그라디언트 배경**: 보라색 계열의 현대적인 그라디언트
-- **Space Grotesk 폰트**: 기술적이고 모던한 느낌
-- **반응형 디자인**: 모바일, 태블릿, 데스크톱 지원
-- **애니메이션 효과**: 호버, 펄스 애니메이션
 
-## 📊 데이터 아키텍처
+### 우주 테마
+- ⭐ **200개의 반짝이는 별** - 무작위 위치와 타이밍
+- 🚀 **날아다니는 로켓** - 대각선 비행 애니메이션
+- 🪐 **떠다니는 행성** - 부드러운 float 효과
+- 💚 **네온 글로우** - 사이버펑크 스타일
+- 🎯 **인터랙티브 카드** - 호버시 확대 효과
 
-### 데이터 모델
-1. **Token Info** (토큰 정보)
-   - name: RAPDAO
-   - symbol: RAP
-   - total_supply: 1,000,000,000
-   - decimals: 18
-
-2. **Accounts** (계정)
-   - id, address, balance, created_at
-
-3. **Transactions** (트랜잭션)
-   - id, from_address, to_address, amount, tx_hash, status, created_at
-
-### 스토리지 서비스
-- **Cloudflare D1**: SQLite 기반 글로벌 분산 데이터베이스
-- **로컬 개발**: `.wrangler/state/v3/d1` 로컬 SQLite
-
-### 데이터 플로우
-```
-사용자 입력 → API 엔드포인트 → D1 데이터베이스 → JSON 응답 → 프론트엔드 렌더링
-```
-
-## 📱 사용자 가이드
-
-### 토큰 발행하기
-1. "토큰 발행" 탭 선택
-2. 지갑 주소 입력 (예: 0xABC123...)
-3. 발행할 수량 입력 (예: 1000)
-4. "토큰 발행하기" 버튼 클릭
-
-### 토큰 전송하기
-1. "전송" 탭 선택
-2. 발신 주소 입력 (기존 계정 주소)
-3. 수신 주소 입력
-4. 전송할 수량 입력
-5. "전송하기" 버튼 클릭
-
-### 계정 확인하기
-1. "계정" 탭 선택
-2. 전체 계정 목록 및 잔액 확인
-3. "새로고침" 버튼으로 최신 정보 갱신
-
-### 트랜잭션 확인하기
-1. "트랜잭션" 탭 선택
-2. 전체 트랜잭션 내역 확인
-3. 발신/수신 주소, 금액, 시간 정보 제공
-
-## 🚀 배포
-
-### 플랫폼
-- **Cloudflare Pages**: 엣지 컴퓨팅 플랫폼
-- **상태**: ✅ 로컬 개발 환경 활성화
-- **Tech Stack**: Hono + TypeScript + TailwindCSS + Cloudflare D1
-
-### 로컬 개발 환경 실행
-
-```bash
-# 1. 의존성 설치
-npm install
-
-# 2. 프로젝트 빌드
-npm run build
-
-# 3. D1 데이터베이스 마이그레이션
-npm run db:migrate:local
-
-# 4. 개발 서버 시작
-pm2 start ecosystem.config.cjs
-
-# 5. 서버 테스트
-npm run test
-# 또는
-curl http://localhost:3000
-```
-
-### 유용한 명령어
-
-```bash
-# 포트 3000 정리
-npm run clean-port
-
-# D1 데이터베이스 초기화
-npm run db:reset
-
-# PM2 로그 확인
-pm2 logs webapp --nostream
-
-# PM2 서비스 재시작
-pm2 restart webapp
-
-# PM2 서비스 중지
-pm2 stop webapp
-```
-
-## 🔧 API 엔드포인트
-
-### 토큰 정보
-- `GET /api/token/info` - 토큰 기본 정보 조회
-
-### 계정 관리
-- `POST /api/account/create` - 계정 생성 (토큰 발행)
-  ```json
-  { "address": "0x...", "amount": 1000 }
-  ```
-- `GET /api/account/:address` - 특정 계정 조회
-- `GET /api/accounts` - 전체 계정 목록
-
-### 전송
-- `POST /api/transfer` - 토큰 전송
-  ```json
-  { "from": "0x...", "to": "0x...", "amount": 100 }
-  ```
-
-### 트랜잭션
-- `GET /api/transactions` - 전체 트랜잭션 내역 (최근 100개)
-- `GET /api/transactions/:address` - 특정 주소의 트랜잭션
-
-## 🔗 실제 블록체인 토큰 배포
-
-### 🎯 지금 바로 실제 블록체인에 토큰을 배포할 수 있습니다!
-
-**📖 상세 가이드**: [BLOCKCHAIN-GUIDE.md](./BLOCKCHAIN-GUIDE.md) 파일을 참고하세요.
-
-### 빠른 시작
-
-```bash
-# 1. 환경 변수 설정
-cp .env.example .env
-# .env 파일에 MetaMask 개인키 입력
-
-# 2. Sepolia 테스트넷에 배포
-npx hardhat run scripts/deploy.cjs --network sepolia
-
-# 3. MetaMask에 토큰 추가
-# 배포된 컨트랙트 주소를 MetaMask에 추가
-```
-
-### 스마트 컨트랙트 기능
-- ✅ **ERC-20 표준 준수**: 모든 지갑/거래소 호환
-- ✅ **토큰 발행 (Mint)**: 오직 소유자만 가능
-- ✅ **토큰 소각 (Burn)**: 누구나 자신의 토큰 소각 가능
-- ✅ **최대 공급량 제한**: 1,000,000,000 RAP
-- ✅ **OpenZeppelin 라이브러리**: 검증된 보안
-
-### 필요한 것
-1. MetaMask 지갑
-2. 테스트 ETH (무료 Faucet에서 받기)
-3. 5분의 시간
-
-**자세한 내용은 [BLOCKCHAIN-GUIDE.md](./BLOCKCHAIN-GUIDE.md)를 확인하세요!**
+### 색상 팔레트
+- **배경**: `#0a0e27` (딥 스페이스)
+- **메인**: `#00ff88` (네온 그린)
+- **보조**: `#00ccff` (사이버 블루)
+- **강조**: 그라디언트 (보라-핑크)
 
 ---
 
-## 🔮 향후 개발 계획
+## 🔒 보안 주의사항
 
-### 추가 고급 기능
-1. **Web3 프론트엔드 통합**
-   - MetaMask 직접 연동
-   - 실시간 블록체인 데이터
-   - 트랜잭션 서명 UI
+⚠️ **중요**: 
 
-2. **고급 기능**
-   - 토큰 소각(Burn) 기능
-   - 스테이킹 시스템
-   - 거버넌스 투표
-   - NFT 통합
+1. **개인키 보호**
+   - `.env` 파일을 절대 공유하지 마세요
+   - GitHub에 업로드하지 마세요
+   - 테스트넷 전용 지갑을 사용하세요
 
-3. **보안 강화**
-   - 서명 검증
-   - 다중 서명 지갑
-   - Rate limiting
-   - CSRF 보호
+2. **테스트넷 사용**
+   - 이 프로젝트는 Sepolia 테스트넷용입니다
+   - 실제 ETH를 사용하지 마세요
+   - 메인넷 배포는 보안 감사 후 진행하세요
 
-4. **UX 개선**
-   - QR 코드 지갑 주소
-   - 트랜잭션 상태 알림
-   - 차트 및 통계
-   - 다국어 지원
+3. **스마트 컨트랙트**
+   - OpenZeppelin 검증된 코드 사용
+   - 추가 기능 구현시 감사 필요
 
-### 권장 다음 단계
-1. Cloudflare Pages 프로덕션 배포
-2. 커스텀 도메인 연결
-3. 환경 변수 설정 (API 키 등)
-4. GitHub 저장소 연동
-5. CI/CD 파이프라인 구축
+---
+
+## 📚 추가 문서
+
+- **[BLOCKCHAIN-GUIDE.md](./BLOCKCHAIN-GUIDE.md)** - 블록체인 배포 상세 가이드
+- **[DEPLOY-NOW.md](./DEPLOY-NOW.md)** - 즉시 배포 가이드
+- **[.env.example](./.env.example)** - 환경 변수 템플릿
+
+---
+
+## 🌟 주요 기능 상세
+
+### MetaMask 연동
+- 자동 네트워크 감지
+- Sepolia로 원클릭 전환
+- 네트워크 자동 추가
+- 계정 변경 감지
+
+### 토큰 관리
+- 실시간 잔액 조회
+- 토큰 전송 기능
+- 트랜잭션 추적
+- Etherscan 연동
+
+### UI/UX
+- 반응형 디자인
+- 다크 모드 (우주 테마)
+- 부드러운 애니메이션
+- 직관적인 인터페이스
+
+---
+
+## 🐛 문제 해결
+
+### MetaMask 연결 안됨
+→ MetaMask 설치 확인 및 브라우저 새로고침
+
+### 네트워크 오류
+→ 자동으로 Sepolia로 전환됩니다. "승인" 클릭
+
+### 잔액이 0으로 표시
+→ 올바른 계정과 네트워크 확인
+
+### 전송 실패
+→ 가스비용 테스트 ETH 필요 (Faucet에서 받기)
+
+---
+
+## 🎯 향후 계획
+
+- [ ] 메인넷 배포 (보안 감사 후)
+- [ ] 스테이킹 기능
+- [ ] DAO 거버넌스
+- [ ] NFT 통합
+- [ ] 모바일 앱
+- [ ] 다국어 지원
+
+---
+
+## 🤝 기여하기
+
+Pull Request를 환영합니다!
+
+1. Fork the Project
+2. Create your Feature Branch (\`git checkout -b feature/AmazingFeature\`)
+3. Commit your Changes (\`git commit -m 'Add some AmazingFeature'\`)
+4. Push to the Branch (\`git push origin feature/AmazingFeature\`)
+5. Open a Pull Request
+
+---
 
 ## 📄 라이선스
-MIT License
 
-## 🤝 기여
-이슈 및 풀 리퀘스트는 언제나 환영합니다!
+MIT License - 자유롭게 사용하세요!
 
 ---
 
-**Last Updated**: 2025-11-05
+## 👨‍💻 개발자
 
-Made with ❤️ using Hono, Cloudflare, and TailwindCSS
+**RAPDAO Team**
+
+- GitHub: [@agna-git](https://github.com/agna-git)
+- 프로젝트: [RAPDAO](https://github.com/agna-git/RAPDAO)
+
+---
+
+## 🙏 감사의 말
+
+- **OpenZeppelin** - 보안 스마트 컨트랙트 라이브러리
+- **Hono** - 빠르고 가벼운 웹 프레임워크
+- **Cloudflare** - 엣지 컴퓨팅 플랫폼
+- **Ethereum** - 블록체인 인프라
+
+---
+
+## 📞 지원
+
+문제가 있으시면 [Issues](https://github.com/agna-git/RAPDAO/issues)에 등록해주세요!
+
+---
+
+**Made with 💚 in 2025**
+
+🚀 **TO THE MOON AND BEYOND!** 🌙✨
