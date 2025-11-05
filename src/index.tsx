@@ -356,6 +356,47 @@ app.get('/', (c) => {
 
             let provider, signer, contract, userAddress;
 
+            // Sepolia 네트워크 추가/전환
+            async function switchToSepolia() {
+                const sepoliaChainId = '0xaa36a7'; // 11155111
+                
+                try {
+                    // 먼저 네트워크 전환 시도
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: sepoliaChainId }],
+                    });
+                    return true;
+                } catch (switchError) {
+                    // 네트워크가 없으면 추가
+                    if (switchError.code === 4902) {
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: sepoliaChainId,
+                                    chainName: 'Sepolia Testnet',
+                                    nativeCurrency: {
+                                        name: 'Sepolia ETH',
+                                        symbol: 'ETH',
+                                        decimals: 18
+                                    },
+                                    rpcUrls: ['https://rpc.sepolia.org'],
+                                    blockExplorerUrls: ['https://sepolia.etherscan.io']
+                                }],
+                            });
+                            return true;
+                        } catch (addError) {
+                            console.error('네트워크 추가 실패:', addError);
+                            return false;
+                        }
+                    } else {
+                        console.error('네트워크 전환 실패:', switchError);
+                        return false;
+                    }
+                }
+            }
+
             // MetaMask 연결
             async function connectWallet() {
                 if (typeof window.ethereum === 'undefined') {
@@ -365,34 +406,45 @@ app.get('/', (c) => {
                 }
 
                 try {
-                    provider = new ethers.BrowserProvider(window.ethereum);
-                    const accounts = await provider.send("eth_requestAccounts", []);
+                    // 1. 계정 연결 요청
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                    });
                     userAddress = accounts[0];
+
+                    // 2. 현재 네트워크 확인
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    const network = await provider.getNetwork();
+                    
+                    // 3. Sepolia가 아니면 자동 전환
+                    if (network.chainId !== 11155111n) {
+                        const switched = await switchToSepolia();
+                        if (!switched) {
+                            alert('❌ Sepolia 네트워크로 전환할 수 없습니다.\\n\\nMetaMask에서 수동으로 Sepolia를 선택해주세요.');
+                            return;
+                        }
+                        // 전환 후 provider 재생성
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        provider = new ethers.BrowserProvider(window.ethereum);
+                    }
+
+                    // 4. 컨트랙트 연결
                     signer = await provider.getSigner();
                     contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-                    const network = await provider.getNetwork();
-                    if (network.chainId !== 11155111n) {
-                        alert('⚠️ Sepolia 테스트넷으로 전환해주세요!');
-                        try {
-                            await window.ethereum.request({
-                                method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: '0xaa36a7' }],
-                            });
-                        } catch (switchError) {
-                            alert('네트워크 전환에 실패했습니다.');
-                        }
-                        return;
-                    }
-
+                    // 5. UI 업데이트
                     document.getElementById('walletInfo').innerHTML = 
                         \`✅ Connected: \${userAddress.substring(0, 6)}...\${userAddress.substring(38)}\`;
                     document.getElementById('walletInfo').classList.remove('hidden');
 
+                    // 6. 잔액 조회
                     await updateBalance();
+                    
+                    alert('✅ 지갑 연결 성공!\\n\\n주소: ' + userAddress.substring(0, 10) + '...');
+                    
                 } catch (error) {
-                    console.error(error);
-                    alert('지갑 연결 실패: ' + error.message);
+                    console.error('연결 오류:', error);
+                    alert('❌ 지갑 연결 실패\\n\\n' + error.message);
                 }
             }
 
@@ -479,16 +531,38 @@ app.get('/', (c) => {
                 }
             }
 
+            // 네트워크 변경 감지
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.on('chainChanged', (chainId) => {
+                    console.log('네트워크 변경:', chainId);
+                    // 페이지 새로고침
+                    window.location.reload();
+                });
+
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    console.log('계정 변경:', accounts);
+                    if (accounts.length === 0) {
+                        // 연결 해제됨
+                        document.getElementById('walletInfo').classList.add('hidden');
+                        document.getElementById('userBalance').textContent = '--';
+                    } else {
+                        // 자동 재연결
+                        connectWallet();
+                    }
+                });
+            }
+
             // 페이지 로드시 자동 연결 시도
             window.addEventListener('load', async () => {
                 if (typeof window.ethereum !== 'undefined') {
                     try {
                         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                         if (accounts.length > 0) {
+                            // 이미 연결된 계정이 있으면 자동 연결
                             await connectWallet();
                         }
                     } catch (error) {
-                        console.error(error);
+                        console.error('자동 연결 실패:', error);
                     }
                 }
             });
