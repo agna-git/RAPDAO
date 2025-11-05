@@ -1,5 +1,7 @@
 # RAPDAO Token Platform
 
+> 🚀 **실제 블록체인 배포 가능!** ERC-20 스마트 컨트랙트로 진짜 암호화폐를 만들어보세요!
+
 ## 프로젝트 개요
 - **이름**: RAPDAO Token Platform
 - **목표**: 차세대 토큰 발행 및 관리 플랫폼
@@ -8,6 +10,7 @@
   - 토큰 전송 (Transfer)
   - 계정 관리
   - 트랜잭션 내역 조회
+  - **✨ NEW: 실제 블록체인 배포 (Sepolia/Mumbai 테스트넷)**
 
 ## 🌐 URLs
 - **개발 서버**: https://3000-in1uq58h63mcoaphdbad0-5c13a017.sandbox.novita.ai
@@ -162,13 +165,49 @@ pm2 stop webapp
 - `GET /api/transactions` - 전체 트랜잭션 내역 (최근 100개)
 - `GET /api/transactions/:address` - 특정 주소의 트랜잭션
 
+## 🔗 실제 블록체인 토큰 배포
+
+### 🎯 지금 바로 실제 블록체인에 토큰을 배포할 수 있습니다!
+
+**📖 상세 가이드**: [BLOCKCHAIN-GUIDE.md](./BLOCKCHAIN-GUIDE.md) 파일을 참고하세요.
+
+### 빠른 시작
+
+```bash
+# 1. 환경 변수 설정
+cp .env.example .env
+# .env 파일에 MetaMask 개인키 입력
+
+# 2. Sepolia 테스트넷에 배포
+npx hardhat run scripts/deploy.cjs --network sepolia
+
+# 3. MetaMask에 토큰 추가
+# 배포된 컨트랙트 주소를 MetaMask에 추가
+```
+
+### 스마트 컨트랙트 기능
+- ✅ **ERC-20 표준 준수**: 모든 지갑/거래소 호환
+- ✅ **토큰 발행 (Mint)**: 오직 소유자만 가능
+- ✅ **토큰 소각 (Burn)**: 누구나 자신의 토큰 소각 가능
+- ✅ **최대 공급량 제한**: 1,000,000,000 RAP
+- ✅ **OpenZeppelin 라이브러리**: 검증된 보안
+
+### 필요한 것
+1. MetaMask 지갑
+2. 테스트 ETH (무료 Faucet에서 받기)
+3. 5분의 시간
+
+**자세한 내용은 [BLOCKCHAIN-GUIDE.md](./BLOCKCHAIN-GUIDE.md)를 확인하세요!**
+
+---
+
 ## 🔮 향후 개발 계획
 
-### 미구현 기능
-1. **실제 블록체인 연동**
-   - 이더리움/폴리곤 메인넷 연동
-   - 스마트 컨트랙트 배포
-   - Web3 지갑 연동 (MetaMask 등)
+### 추가 고급 기능
+1. **Web3 프론트엔드 통합**
+   - MetaMask 직접 연동
+   - 실시간 블록체인 데이터
+   - 트랜잭션 서명 UI
 
 2. **고급 기능**
    - 토큰 소각(Burn) 기능

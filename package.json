@@ -13,7 +13,12 @@
     "db:migrate:prod": "wrangler d1 migrations apply webapp-production",
     "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local",
     "clean-port": "fuser -k 3000/tcp 2>/dev/null || true",
-    "test": "curl http://localhost:3000"
+    "test": "curl http://localhost:3000",
+    "blockchain:compile": "hardhat compile",
+    "blockchain:deploy:sepolia": "hardhat run scripts/deploy.cjs --network sepolia",
+    "blockchain:deploy:mumbai": "hardhat run scripts/deploy.cjs --network mumbai",
+    "blockchain:verify": "hardhat run scripts/verify.cjs --network sepolia",
+    "blockchain:console": "hardhat console --network sepolia"
   },
   "dependencies": {
     "hono": "^4.10.4"
@@ -21,6 +26,14 @@
   "devDependencies": {
     "@hono/vite-build": "^1.2.0",
     "@hono/vite-dev-server": "^0.18.2",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@openzeppelin/contracts": "^5.4.0",
+    "@types/node": "^24.10.0",
+    "dotenv": "^17.2.3",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.26.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
     "vite": "^6.3.5",
     "wrangler": "^4.4.0"
   }
