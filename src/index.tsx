@@ -14,179 +14,9 @@ app.use('/api/*', cors())
 // Static files
 app.use('/static/*', serveStatic({ root: './public' }))
 
-// ==================== API Routes ====================
-
-// 토큰 정보 조회
-app.get('/api/token/info', async (c) => {
-  try {
-    const { env } = c
-    const result = await env.DB.prepare(
-      'SELECT * FROM token_info WHERE id = 1'
-    ).first()
-    
-    return c.json({ success: true, data: result })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500)
-  }
-})
-
-// 계정 생성 (토큰 발행)
-app.post('/api/account/create', async (c) => {
-  try {
-    const { env } = c
-    const { address, amount } = await c.req.json()
-    
-    if (!address || !amount) {
-      return c.json({ success: false, error: '주소와 수량이 필요합니다.' }, 400)
-    }
-
-    // 계정이 이미 존재하는지 확인
-    const existing = await env.DB.prepare(
-      'SELECT * FROM accounts WHERE address = ?'
-    ).bind(address).first()
-
-    if (existing) {
-      return c.json({ success: false, error: '이미 존재하는 주소입니다.' }, 400)
-    }
-
-    // 계정 생성
-    await env.DB.prepare(
-      'INSERT INTO accounts (address, balance) VALUES (?, ?)'
-    ).bind(address, amount).run()
-
-    return c.json({ 
-      success: true, 
-      data: { address, balance: amount } 
-    })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500)
-  }
-})
-
-// 잔액 조회
-app.get('/api/account/:address', async (c) => {
-  try {
-    const { env } = c
-    const address = c.req.param('address')
-    
-    const account = await env.DB.prepare(
-      'SELECT * FROM accounts WHERE address = ?'
-    ).bind(address).first()
-
-    if (!account) {
-      return c.json({ success: false, error: '계정을 찾을 수 없습니다.' }, 404)
-    }
-
-    return c.json({ success: true, data: account })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500)
-  }
-})
-
-// 모든 계정 조회
-app.get('/api/accounts', async (c) => {
-  try {
-    const { env } = c
-    const { results } = await env.DB.prepare(
-      'SELECT * FROM accounts ORDER BY created_at DESC'
-    ).all()
-
-    return c.json({ success: true, data: results })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500)
-  }
-})
-
-// 토큰 전송
-app.post('/api/transfer', async (c) => {
-  try {
-    const { env } = c
-    const { from, to, amount } = await c.req.json()
-    
-    if (!from || !to || !amount || amount <= 0) {
-      return c.json({ success: false, error: '잘못된 요청입니다.' }, 400)
-    }
-
-    // 발신자 계정 확인
-    const fromAccount = await env.DB.prepare(
-      'SELECT * FROM accounts WHERE address = ?'
-    ).bind(from).first() as any
-
-    if (!fromAccount) {
-      return c.json({ success: false, error: '발신자 계정을 찾을 수 없습니다.' }, 404)
-    }
-
-    if (fromAccount.balance < amount) {
-      return c.json({ success: false, error: '잔액이 부족합니다.' }, 400)
-    }
-
-    // 수신자 계정 확인 (없으면 생성)
-    let toAccount = await env.DB.prepare(
-      'SELECT * FROM accounts WHERE address = ?'
-    ).bind(to).first()
-
-    if (!toAccount) {
-      await env.DB.prepare(
-        'INSERT INTO accounts (address, balance) VALUES (?, 0)'
-      ).bind(to).run()
-    }
-
-    // 트랜잭션 해시 생성
-    const txHash = `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`
-
-    // 발신자 잔액 감소
-    await env.DB.prepare(
-      'UPDATE accounts SET balance = balance - ? WHERE address = ?'
-    ).bind(amount, from).run()
-
-    // 수신자 잔액 증가
-    await env.DB.prepare(
-      'UPDATE accounts SET balance = balance + ? WHERE address = ?'
-    ).bind(amount, to).run()
-
-    // 트랜잭션 기록
-    await env.DB.prepare(
-      'INSERT INTO transactions (from_address, to_address, amount, tx_hash, status) VALUES (?, ?, ?, ?, ?)'
-    ).bind(from, to, amount, txHash, 'confirmed').run()
-
-    return c.json({ 
-      success: true, 
-      data: { from, to, amount, txHash } 
-    })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500)
-  }
-})
-
-// 트랜잭션 내역 조회
-app.get('/api/transactions', async (c) => {
-  try {
-    const { env } = c
-    const { results } = await env.DB.prepare(
-      'SELECT * FROM transactions ORDER BY created_at DESC LIMIT 100'
-    ).all()
-
-    return c.json({ success: true, data: results })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500)
-  }
-})
-
-// 특정 주소의 트랜잭션 조회
-app.get('/api/transactions/:address', async (c) => {
-  try {
-    const { env } = c
-    const address = c.req.param('address')
-    
-    const { results } = await env.DB.prepare(
-      'SELECT * FROM transactions WHERE from_address = ? OR to_address = ? ORDER BY created_at DESC'
-    ).bind(address, address).all()
-
-    return c.json({ success: true, data: results })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500)
-  }
-})
+// 블록체인 정보
+const CONTRACT_ADDRESS = '0x90609291dE2433dFe1E4e553c8a1A68f94d8ab7d'
+const ETHERSCAN_URL = `https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}`
 
 // ==================== Frontend ====================
 
@@ -197,397 +27,471 @@ app.get('/', (c) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>RAPDAO Token Platform</title>
+        <title>🚀 RAPDAO - To The Moon!</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Audiowide&display=swap');
             
             * {
-                font-family: 'Space Grotesk', sans-serif;
+                font-family: 'Orbitron', sans-serif;
             }
             
             body {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
+                margin: 0;
+                padding: 0;
+                overflow-x: hidden;
+                background: #0a0e27;
+                position: relative;
             }
             
-            .glass {
-                background: rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            /* 별 배경 애니메이션 */
+            .stars {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 0;
             }
             
-            .gradient-text {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-            }
-            
-            .btn-primary {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                transition: all 0.3s ease;
-            }
-            
-            .btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-            }
-            
-            .card-hover {
-                transition: all 0.3s ease;
-            }
-            
-            .card-hover:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-            }
-            
-            .pulse-animation {
-                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-            }
-            
-            @keyframes pulse {
-                0%, 100% {
-                    opacity: 1;
-                }
-                50% {
-                    opacity: .7;
-                }
-            }
-            
-            .tab-active {
+            .star {
+                position: absolute;
                 background: white;
-                color: #667eea;
+                border-radius: 50%;
+                animation: twinkle 3s infinite;
+            }
+            
+            @keyframes twinkle {
+                0%, 100% { opacity: 0.3; }
+                50% { opacity: 1; }
+            }
+            
+            /* 로켓 애니메이션 */
+            .rocket {
+                position: fixed;
+                font-size: 60px;
+                animation: rocket-fly 20s linear infinite;
+                z-index: 1;
+            }
+            
+            @keyframes rocket-fly {
+                0% {
+                    left: -100px;
+                    bottom: -100px;
+                    transform: rotate(45deg);
+                }
+                100% {
+                    left: 120%;
+                    bottom: 120%;
+                    transform: rotate(45deg);
+                }
+            }
+            
+            /* 네온 효과 */
+            .neon-text {
+                text-shadow: 
+                    0 0 10px #00ff88,
+                    0 0 20px #00ff88,
+                    0 0 30px #00ff88,
+                    0 0 40px #00ff88;
+                animation: neon-pulse 2s ease-in-out infinite;
+            }
+            
+            @keyframes neon-pulse {
+                0%, 100% { text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88; }
+                50% { text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88, 0 0 60px #00ff88; }
+            }
+            
+            /* 카드 효과 */
+            .space-card {
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+                backdrop-filter: blur(10px);
+                border: 2px solid #00ff88;
+                box-shadow: 
+                    0 0 20px rgba(0, 255, 136, 0.3),
+                    0 0 40px rgba(0, 255, 136, 0.1);
+                transition: all 0.3s ease;
+            }
+            
+            .space-card:hover {
+                transform: translateY(-10px) scale(1.02);
+                box-shadow: 
+                    0 0 30px rgba(0, 255, 136, 0.5),
+                    0 0 60px rgba(0, 255, 136, 0.2);
+            }
+            
+            /* 버튼 효과 */
+            .space-button {
+                background: linear-gradient(135deg, #00ff88, #00ccff);
+                border: none;
+                color: #0a0e27;
+                font-weight: bold;
+                padding: 15px 40px;
+                border-radius: 50px;
+                font-size: 18px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            }
+            
+            .space-button:hover {
+                transform: scale(1.1);
+                box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
+            }
+            
+            /* 입력 필드 */
+            .space-input {
+                background: rgba(15, 23, 42, 0.6);
+                border: 2px solid #00ff88;
+                color: #00ff88;
+                padding: 15px;
+                border-radius: 10px;
+                font-family: 'Orbitron', monospace;
+                transition: all 0.3s ease;
+            }
+            
+            .space-input:focus {
+                outline: none;
+                border-color: #00ccff;
+                box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            }
+            
+            /* 행성 장식 */
+            .planet {
+                position: fixed;
+                border-radius: 50%;
+                filter: blur(1px);
+                z-index: 0;
+            }
+            
+            .planet-1 {
+                width: 150px;
+                height: 150px;
+                background: radial-gradient(circle at 30% 30%, #ff6b9d, #c44569);
+                top: 10%;
+                right: 10%;
+                animation: float 20s ease-in-out infinite;
+            }
+            
+            .planet-2 {
+                width: 100px;
+                height: 100px;
+                background: radial-gradient(circle at 30% 30%, #ffa502, #ff6348);
+                bottom: 20%;
+                left: 15%;
+                animation: float 15s ease-in-out infinite reverse;
+            }
+            
+            @keyframes float {
+                0%, 100% { transform: translateY(0px) rotate(0deg); }
+                50% { transform: translateY(-30px) rotate(180deg); }
+            }
+            
+            /* 컨텐츠 레이어 */
+            .content {
+                position: relative;
+                z-index: 10;
+            }
+            
+            /* 카운터 애니메이션 */
+            @keyframes count-up {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            .stat-box {
+                animation: count-up 0.5s ease-out;
             }
         </style>
     </head>
-    <body class="p-4 md:p-8">
-        <div class="max-w-7xl mx-auto">
-            <!-- Header -->
-            <div class="glass rounded-3xl p-8 mb-8 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-4xl md:text-5xl font-bold mb-2 flex items-center">
-                            <i class="fas fa-coins mr-4 pulse-animation"></i>
-                            RAPDAO
-                        </h1>
-                        <p class="text-xl opacity-90">Next Generation Token Platform</p>
+    <body>
+        <!-- 별 배경 -->
+        <div class="stars" id="stars"></div>
+        
+        <!-- 로켓 -->
+        <div class="rocket">🚀</div>
+        
+        <!-- 행성 -->
+        <div class="planet planet-1"></div>
+        <div class="planet planet-2"></div>
+        
+        <!-- 메인 콘텐츠 -->
+        <div class="content min-h-screen p-4 md:p-8">
+            <div class="max-w-7xl mx-auto">
+                
+                <!-- 헤더 -->
+                <header class="text-center mb-12 pt-8">
+                    <h1 class="text-6xl md:text-8xl font-black mb-4 neon-text" style="font-family: 'Audiowide', cursive;">
+                        🌟 RAPDAO 🌟
+                    </h1>
+                    <p class="text-2xl md:text-3xl text-cyan-400 font-bold mb-6">
+                        TO THE MOON AND BEYOND! 🚀
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-4 mb-6">
+                        <a href="${ETHERSCAN_URL}" target="_blank" class="space-button">
+                            <i class="fas fa-link mr-2"></i>View on Etherscan
+                        </a>
+                        <button onclick="connectWallet()" class="space-button bg-gradient-to-r from-purple-500 to-pink-500">
+                            <i class="fas fa-wallet mr-2"></i>Connect Wallet
+                        </button>
                     </div>
-                    <div class="text-right">
-                        <div class="text-sm opacity-75 mb-1">Total Supply</div>
-                        <div class="text-3xl font-bold" id="totalSupply">-</div>
+                    <div id="walletInfo" class="text-cyan-300 text-lg hidden"></div>
+                </header>
+
+                <!-- 통계 카드 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+                    <div class="space-card rounded-2xl p-6 text-center stat-box">
+                        <div class="text-5xl mb-3">💎</div>
+                        <div class="text-cyan-400 text-sm mb-2">Total Supply</div>
+                        <div class="text-3xl font-bold text-white">10M</div>
+                    </div>
+                    <div class="space-card rounded-2xl p-6 text-center stat-box">
+                        <div class="text-5xl mb-3">🏷️</div>
+                        <div class="text-cyan-400 text-sm mb-2">Symbol</div>
+                        <div class="text-3xl font-bold text-white">RAP</div>
+                    </div>
+                    <div class="space-card rounded-2xl p-6 text-center stat-box">
+                        <div class="text-5xl mb-3">⛓️</div>
+                        <div class="text-cyan-400 text-sm mb-2">Network</div>
+                        <div class="text-2xl font-bold text-white">Sepolia</div>
+                    </div>
+                    <div class="space-card rounded-2xl p-6 text-center stat-box">
+                        <div class="text-5xl mb-3">🎯</div>
+                        <div class="text-cyan-400 text-sm mb-2">Your Balance</div>
+                        <div class="text-3xl font-bold text-white" id="userBalance">--</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Tabs -->
-            <div class="glass rounded-3xl p-2 mb-6">
-                <div class="flex gap-2">
-                    <button onclick="switchTab('mint')" id="tab-mint" class="tab-active flex-1 py-3 px-6 rounded-2xl font-semibold transition-all">
-                        <i class="fas fa-plus-circle mr-2"></i>토큰 발행
-                    </button>
-                    <button onclick="switchTab('transfer')" id="tab-transfer" class="flex-1 py-3 px-6 rounded-2xl font-semibold text-white transition-all hover:bg-white/10">
-                        <i class="fas fa-exchange-alt mr-2"></i>전송
-                    </button>
-                    <button onclick="switchTab('accounts')" id="tab-accounts" class="flex-1 py-3 px-6 rounded-2xl font-semibold text-white transition-all hover:bg-white/10">
-                        <i class="fas fa-users mr-2"></i>계정
-                    </button>
-                    <button onclick="switchTab('transactions')" id="tab-transactions" class="flex-1 py-3 px-6 rounded-2xl font-semibold text-white transition-all hover:bg-white/10">
-                        <i class="fas fa-list mr-2"></i>트랜잭션
-                    </button>
-                </div>
-            </div>
+                <!-- 기능 섹션 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- 토큰 정보 -->
+                    <div class="space-card rounded-3xl p-8">
+                        <h2 class="text-3xl font-bold text-white mb-6 flex items-center">
+                            <i class="fas fa-info-circle text-cyan-400 mr-3"></i>
+                            Token Info
+                        </h2>
+                        <div class="space-y-4 text-cyan-300">
+                            <div class="flex justify-between p-4 bg-black/30 rounded-xl">
+                                <span>Contract Address:</span>
+                                <span class="font-mono text-sm text-cyan-400">${CONTRACT_ADDRESS.substring(0, 10)}...</span>
+                            </div>
+                            <div class="flex justify-between p-4 bg-black/30 rounded-xl">
+                                <span>Decimals:</span>
+                                <span class="text-white font-bold">18</span>
+                            </div>
+                            <div class="flex justify-between p-4 bg-black/30 rounded-xl">
+                                <span>Max Supply:</span>
+                                <span class="text-white font-bold">10,000,000 RAP</span>
+                            </div>
+                            <button onclick="addToMetaMask()" class="w-full space-button mt-4">
+                                <i class="fab fa-ethereum mr-2"></i>Add to MetaMask
+                            </button>
+                        </div>
+                    </div>
 
-            <!-- Content Area -->
-            <div id="content-area">
-                <!-- Mint Section -->
-                <div id="section-mint" class="content-section">
-                    <div class="glass rounded-3xl p-8 text-white card-hover">
-                        <h2 class="text-2xl font-bold mb-6 flex items-center">
-                            <i class="fas fa-plus-circle mr-3"></i>
-                            토큰 발행
+                    <!-- 전송 기능 -->
+                    <div class="space-card rounded-3xl p-8">
+                        <h2 class="text-3xl font-bold text-white mb-6 flex items-center">
+                            <i class="fas fa-paper-plane text-cyan-400 mr-3"></i>
+                            Send RAP
                         </h2>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium mb-2 opacity-75">지갑 주소</label>
-                                <input type="text" id="mintAddress" 
-                                    class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none"
-                                    placeholder="0x...">
+                                <label class="text-cyan-400 text-sm mb-2 block">To Address</label>
+                                <input type="text" id="sendTo" class="w-full space-input" placeholder="0x...">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-2 opacity-75">수량</label>
-                                <input type="number" id="mintAmount" 
-                                    class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none"
-                                    placeholder="1000">
+                                <label class="text-cyan-400 text-sm mb-2 block">Amount</label>
+                                <input type="number" id="sendAmount" class="w-full space-input" placeholder="100">
                             </div>
-                            <button onclick="mintTokens()" 
-                                class="w-full btn-primary text-white font-semibold py-4 px-6 rounded-xl">
-                                <i class="fas fa-rocket mr-2"></i>
-                                토큰 발행하기
+                            <button onclick="sendTokens()" class="w-full space-button">
+                                <i class="fas fa-rocket mr-2"></i>Launch Transfer! 🚀
                             </button>
                         </div>
-                        <div id="mintResult" class="mt-4"></div>
+                        <div id="sendResult" class="mt-4"></div>
                     </div>
+
                 </div>
 
-                <!-- Transfer Section -->
-                <div id="section-transfer" class="content-section hidden">
-                    <div class="glass rounded-3xl p-8 text-white card-hover">
-                        <h2 class="text-2xl font-bold mb-6 flex items-center">
-                            <i class="fas fa-exchange-alt mr-3"></i>
-                            토큰 전송
-                        </h2>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-2 opacity-75">발신 주소</label>
-                                <input type="text" id="fromAddress" 
-                                    class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none"
-                                    placeholder="0x...">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 opacity-75">수신 주소</label>
-                                <input type="text" id="toAddress" 
-                                    class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none"
-                                    placeholder="0x...">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 opacity-75">수량</label>
-                                <input type="number" id="transferAmount" 
-                                    class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none"
-                                    placeholder="100">
-                            </div>
-                            <button onclick="transferTokens()" 
-                                class="w-full btn-primary text-white font-semibold py-4 px-6 rounded-xl">
-                                <i class="fas fa-paper-plane mr-2"></i>
-                                전송하기
-                            </button>
-                        </div>
-                        <div id="transferResult" class="mt-4"></div>
-                    </div>
-                </div>
+                <!-- 푸터 -->
+                <footer class="text-center mt-16 pb-8 text-cyan-400">
+                    <p class="text-lg mb-2">🌌 Powered by Ethereum Blockchain 🌌</p>
+                    <p class="text-sm opacity-75">Contract: ${CONTRACT_ADDRESS}</p>
+                    <p class="text-xs mt-4 opacity-50">Made with 💚 by RAPDAO Team</p>
+                </footer>
 
-                <!-- Accounts Section -->
-                <div id="section-accounts" class="content-section hidden">
-                    <div class="glass rounded-3xl p-8 text-white">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-2xl font-bold flex items-center">
-                                <i class="fas fa-users mr-3"></i>
-                                계정 목록
-                            </h2>
-                            <button onclick="loadAccounts()" class="btn-primary px-4 py-2 rounded-xl text-sm">
-                                <i class="fas fa-sync-alt mr-2"></i>새로고침
-                            </button>
-                        </div>
-                        <div id="accountsList" class="space-y-3"></div>
-                    </div>
-                </div>
-
-                <!-- Transactions Section -->
-                <div id="section-transactions" class="content-section hidden">
-                    <div class="glass rounded-3xl p-8 text-white">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-2xl font-bold flex items-center">
-                                <i class="fas fa-list mr-3"></i>
-                                트랜잭션 내역
-                            </h2>
-                            <button onclick="loadTransactions()" class="btn-primary px-4 py-2 rounded-xl text-sm">
-                                <i class="fas fa-sync-alt mr-2"></i>새로고침
-                            </button>
-                        </div>
-                        <div id="transactionsList" class="space-y-3"></div>
-                    </div>
-                </div>
             </div>
         </div>
 
+        <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
         <script>
-            // Tab switching
-            function switchTab(tab) {
-                // Update tab buttons
-                document.querySelectorAll('[id^="tab-"]').forEach(btn => {
-                    btn.classList.remove('tab-active');
-                    btn.classList.add('text-white', 'hover:bg-white/10');
-                });
-                document.getElementById('tab-' + tab).classList.add('tab-active');
-                document.getElementById('tab-' + tab).classList.remove('text-white', 'hover:bg-white/10');
-
-                // Update content
-                document.querySelectorAll('.content-section').forEach(section => {
-                    section.classList.add('hidden');
-                });
-                document.getElementById('section-' + tab).classList.remove('hidden');
-
-                // Load data if needed
-                if (tab === 'accounts') loadAccounts();
-                if (tab === 'transactions') loadTransactions();
+            // 별 생성
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
             }
 
-            // Load token info
-            async function loadTokenInfo() {
-                try {
-                    const res = await fetch('/api/token/info');
-                    const data = await res.json();
-                    if (data.success && data.data) {
-                        document.getElementById('totalSupply').textContent = 
-                            (data.data.total_supply / 1000000).toFixed(0) + 'M ' + data.data.symbol;
-                    }
-                } catch (error) {
-                    console.error('Failed to load token info:', error);
-                }
-            }
+            // 컨트랙트 설정
+            const CONTRACT_ADDRESS = '${CONTRACT_ADDRESS}';
+            const CONTRACT_ABI = [
+                "function name() view returns (string)",
+                "function symbol() view returns (string)",
+                "function totalSupply() view returns (uint256)",
+                "function balanceOf(address) view returns (uint256)",
+                "function transfer(address to, uint256 amount) returns (bool)",
+                "event Transfer(address indexed from, address indexed to, uint256 value)"
+            ];
 
-            // Mint tokens
-            async function mintTokens() {
-                const address = document.getElementById('mintAddress').value;
-                const amount = parseInt(document.getElementById('mintAmount').value);
-                const resultDiv = document.getElementById('mintResult');
+            let provider, signer, contract, userAddress;
 
-                if (!address || !amount) {
-                    showResult(resultDiv, '주소와 수량을 입력해주세요.', false);
+            // MetaMask 연결
+            async function connectWallet() {
+                if (typeof window.ethereum === 'undefined') {
+                    alert('❌ MetaMask를 설치해주세요!\\n\\nMetaMask.io에서 다운로드하세요.');
+                    window.open('https://metamask.io/', '_blank');
                     return;
                 }
 
                 try {
-                    const res = await fetch('/api/account/create', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ address, amount })
-                    });
-                    const data = await res.json();
-                    
-                    if (data.success) {
-                        showResult(resultDiv, '✅ 토큰 발행 성공!', true);
-                        document.getElementById('mintAddress').value = '';
-                        document.getElementById('mintAmount').value = '';
-                    } else {
-                        showResult(resultDiv, '❌ ' + data.error, false);
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    const accounts = await provider.send("eth_requestAccounts", []);
+                    userAddress = accounts[0];
+                    signer = await provider.getSigner();
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+                    const network = await provider.getNetwork();
+                    if (network.chainId !== 11155111n) {
+                        alert('⚠️ Sepolia 테스트넷으로 전환해주세요!');
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: '0xaa36a7' }],
+                            });
+                        } catch (switchError) {
+                            alert('네트워크 전환에 실패했습니다.');
+                        }
+                        return;
                     }
+
+                    document.getElementById('walletInfo').innerHTML = 
+                        \`✅ Connected: \${userAddress.substring(0, 6)}...\${userAddress.substring(38)}\`;
+                    document.getElementById('walletInfo').classList.remove('hidden');
+
+                    await updateBalance();
                 } catch (error) {
-                    showResult(resultDiv, '❌ 오류 발생: ' + error.message, false);
+                    console.error(error);
+                    alert('지갑 연결 실패: ' + error.message);
                 }
             }
 
-            // Transfer tokens
-            async function transferTokens() {
-                const from = document.getElementById('fromAddress').value;
-                const to = document.getElementById('toAddress').value;
-                const amount = parseInt(document.getElementById('transferAmount').value);
-                const resultDiv = document.getElementById('transferResult');
+            // 잔액 업데이트
+            async function updateBalance() {
+                if (!contract || !userAddress) return;
+                
+                try {
+                    const balance = await contract.balanceOf(userAddress);
+                    const formatted = ethers.formatEther(balance);
+                    document.getElementById('userBalance').textContent = 
+                        parseFloat(formatted).toLocaleString() + ' RAP';
+                } catch (error) {
+                    console.error('잔액 조회 실패:', error);
+                }
+            }
 
-                if (!from || !to || !amount) {
-                    showResult(resultDiv, '모든 필드를 입력해주세요.', false);
+            // MetaMask에 토큰 추가
+            async function addToMetaMask() {
+                if (typeof window.ethereum === 'undefined') {
+                    alert('MetaMask를 설치해주세요!');
                     return;
                 }
 
                 try {
-                    const res = await fetch('/api/transfer', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ from, to, amount })
+                    await window.ethereum.request({
+                        method: 'wallet_watchAsset',
+                        params: {
+                            type: 'ERC20',
+                            options: {
+                                address: CONTRACT_ADDRESS,
+                                symbol: 'RAP',
+                                decimals: 18,
+                                image: 'https://em-content.zobj.net/thumbs/120/apple/354/rocket_1f680.png',
+                            },
+                        },
                     });
-                    const data = await res.json();
+                    alert('✅ MetaMask에 RAP 토큰이 추가되었습니다!');
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+
+            // 토큰 전송
+            async function sendTokens() {
+                if (!contract) {
+                    alert('먼저 지갑을 연결해주세요!');
+                    return;
+                }
+
+                const to = document.getElementById('sendTo').value;
+                const amount = document.getElementById('sendAmount').value;
+                const resultDiv = document.getElementById('sendResult');
+
+                if (!to || !amount) {
+                    resultDiv.innerHTML = '<div class="p-4 bg-red-500/20 border-2 border-red-500 rounded-xl text-red-300">❌ 주소와 수량을 입력해주세요</div>';
+                    return;
+                }
+
+                try {
+                    resultDiv.innerHTML = '<div class="p-4 bg-yellow-500/20 border-2 border-yellow-500 rounded-xl text-yellow-300">🚀 전송 중...</div>';
                     
-                    if (data.success) {
-                        showResult(resultDiv, '✅ 전송 성공! TX: ' + data.data.txHash, true);
-                        document.getElementById('fromAddress').value = '';
-                        document.getElementById('toAddress').value = '';
-                        document.getElementById('transferAmount').value = '';
-                    } else {
-                        showResult(resultDiv, '❌ ' + data.error, false);
-                    }
+                    const tx = await contract.transfer(to, ethers.parseEther(amount));
+                    resultDiv.innerHTML = '<div class="p-4 bg-blue-500/20 border-2 border-blue-500 rounded-xl text-blue-300">⏳ 블록체인 확인 중...</div>';
+                    
+                    await tx.wait();
+                    
+                    resultDiv.innerHTML = \`
+                        <div class="p-4 bg-green-500/20 border-2 border-green-500 rounded-xl text-green-300">
+                            ✅ 전송 성공! 🎉<br>
+                            <a href="https://sepolia.etherscan.io/tx/\${tx.hash}" target="_blank" class="underline">
+                                트랜잭션 보기 →
+                            </a>
+                        </div>
+                    \`;
+                    
+                    document.getElementById('sendTo').value = '';
+                    document.getElementById('sendAmount').value = '';
+                    
+                    setTimeout(() => updateBalance(), 2000);
                 } catch (error) {
-                    showResult(resultDiv, '❌ 오류 발생: ' + error.message, false);
+                    console.error(error);
+                    resultDiv.innerHTML = \`<div class="p-4 bg-red-500/20 border-2 border-red-500 rounded-xl text-red-300">❌ 전송 실패: \${error.message}</div>\`;
                 }
             }
 
-            // Load accounts
-            async function loadAccounts() {
-                try {
-                    const res = await fetch('/api/accounts');
-                    const data = await res.json();
-                    const listDiv = document.getElementById('accountsList');
-
-                    if (data.success && data.data.length > 0) {
-                        listDiv.innerHTML = data.data.map(acc => \`
-                            <div class="bg-white/10 rounded-xl p-4 border border-white/20 card-hover">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex-1">
-                                        <div class="text-sm opacity-75 mb-1">Address</div>
-                                        <div class="font-mono text-sm break-all">\${acc.address}</div>
-                                    </div>
-                                    <div class="text-right ml-4">
-                                        <div class="text-sm opacity-75 mb-1">Balance</div>
-                                        <div class="text-2xl font-bold">\${acc.balance.toLocaleString()}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        \`).join('');
-                    } else {
-                        listDiv.innerHTML = '<div class="text-center py-8 opacity-75">계정이 없습니다.</div>';
+            // 페이지 로드시 자동 연결 시도
+            window.addEventListener('load', async () => {
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                        if (accounts.length > 0) {
+                            await connectWallet();
+                        }
+                    } catch (error) {
+                        console.error(error);
                     }
-                } catch (error) {
-                    console.error('Failed to load accounts:', error);
                 }
-            }
-
-            // Load transactions
-            async function loadTransactions() {
-                try {
-                    const res = await fetch('/api/transactions');
-                    const data = await res.json();
-                    const listDiv = document.getElementById('transactionsList');
-
-                    if (data.success && data.data.length > 0) {
-                        listDiv.innerHTML = data.data.map(tx => \`
-                            <div class="bg-white/10 rounded-xl p-4 border border-white/20 card-hover">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-arrow-right mr-2"></i>
-                                        <span class="text-sm opacity-75">\${new Date(tx.created_at).toLocaleString()}</span>
-                                    </div>
-                                    <div class="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-300">
-                                        \${tx.status}
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <div class="opacity-75 mb-1">From</div>
-                                        <div class="font-mono text-xs break-all">\${tx.from_address}</div>
-                                    </div>
-                                    <div>
-                                        <div class="opacity-75 mb-1">To</div>
-                                        <div class="font-mono text-xs break-all">\${tx.to_address}</div>
-                                    </div>
-                                </div>
-                                <div class="mt-3 pt-3 border-t border-white/20 flex items-center justify-between">
-                                    <div class="text-sm opacity-75">Amount</div>
-                                    <div class="text-xl font-bold">\${tx.amount.toLocaleString()}</div>
-                                </div>
-                            </div>
-                        \`).join('');
-                    } else {
-                        listDiv.innerHTML = '<div class="text-center py-8 opacity-75">트랜잭션이 없습니다.</div>';
-                    }
-                } catch (error) {
-                    console.error('Failed to load transactions:', error);
-                }
-            }
-
-            // Show result message
-            function showResult(div, message, success) {
-                div.innerHTML = \`
-                    <div class="p-4 rounded-xl \${success ? 'bg-green-500/20 border border-green-500/40' : 'bg-red-500/20 border border-red-500/40'}">
-                        \${message}
-                    </div>
-                \`;
-                setTimeout(() => div.innerHTML = '', 5000);
-            }
-
-            // Initialize
-            loadTokenInfo();
+            });
         </script>
     </body>
     </html>
